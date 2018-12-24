@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>Doffler Client</title>
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+	</head>
+	<body>
+		<div class="container">
+			<h3>Doffler Client</h3>
+			<form class="form-vertical">
+				<div class="form-group">
+					<label for="ipfs">IPFS: </label>
+					<input type="text" class="form-control" id="ipfs">
+				</div>
+				<div class="form-group">
+					<label for="input">input: </label>
+					<input type="text" class="form-control" id="input">
+				</div>
+				<div class="form-group">
+					<label for="env">env: </label>
+					<input type="text" class="form-control" id="env">
+				</div>
+				<div class="form-group">
+					<label for="bounty">bounty: </label>
+					<input type="text" class="form-control" id="bounty">
+				</div>
+				<button type="submit" class="btn btn-primary">Send</button>
+			</form>
+			<div id="logs"></div>
+		</div>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+		<script src="/socket.io/socket.io.js"></script>
+		<script>
+			$(function(){
+				var socket = io();
+
+				socket.emit("login", {
+					userid: makeRandomName(),
+				});
+
+				socket.on("result", function(data) {
+					$("#logs").append("<div>" + data.result + "<div>");
+				});
+
+				$("form").submit(function(e) {
+					e.preventDefault();
+					var $ipfs = $("#ipfs");
+					var $input = $("#input");
+					var $env = $("#env");
+					var $bounty = $("#bounty");
+
+					socket.emit("req", {
+						ipfs: $ipfs.val(),
+						input: $input.val(),
+						env: $env.val(),
+						bounty: $bounty.val()
+					});
+					$ipfs.val("");
+					$input.val("");
+					$env.val("");
+					$bounty.val("");
+				});
+
+				function makeRandomName(){
+					var name = "";
+					var possible = "abcdefghijklmnopqrstuvwxyz";
+					for( var i = 0; i < 3; i++ ) {
+						name += possible.charAt(Math.floor(Math.random() * possible.length));
+					}
+					return name;
+				}
+			});
+		</script>
+	</body>
+</html>
