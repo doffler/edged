@@ -8,6 +8,14 @@ app.get('/', (req, res, next) => {
 });
 
 io.on('connection', (socket) => {
+	socket.on('ipfsSetup', (data) => {
+		socket.broadcast.emit('initIpfs', data);
+	});
+
+	socket.on('result', (data) => {
+		socket.broadcast.emit('offloadingResult', data);
+	});
+
 	socket.on('login', (data) => {
 		console.log(`Client logged-in:\nuserid: ${data.userid}`);
 		socket.userid = data.userid;

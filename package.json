@@ -9,7 +9,9 @@
     "cookie-parser": "~1.4.3",
     "debug": "~2.6.9",
     "express": "~4.16.0",
+    "ipfs": "^0.33.1",
     "morgan": "~1.9.0",
+    "request": "^2.88.0",
     "socket.io": "^2.2.0"
   }
 }
