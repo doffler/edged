@@ -6,18 +6,19 @@ var fs = require('fs');
 var os = require('os');
 
 var jsonFileReadDone = false;
-var execFileReadDone = true;
+var execFileReadDone = false;
 var inputFileReadDone = true;
 var paramFileReadDone = true;
 var json_hash = "";
+var resultData = "";
 
-function execLogic(data) {
+function execLogic() {
     if(jsonFileReadDone && execFileReadDone && inputFileReadDone && paramFileReadDone){
         // TODO:: logic
         console.log("file loading done");
 
-        if(data.run_command){
-            var childPs = exec(data.run_command, function (error, stdout, stderr) {
+        if(resultData.run_command){
+            var childPs = exec(resultData.run_command, function (error, stdout, stderr) {
                 if(error){
                     console.log('fail to execution data');
                 }
@@ -42,7 +43,6 @@ var url = baseUrl;
 url = baseUrl + data;
 
 request({ url: url, timeout: 5000 }, function (error, response, body) {
-    var resultData = "";
     if(error){
         var childPs = exec('ipfs cat ' + data, function (error, stdout, stderr) {
             if(error){
@@ -253,7 +253,7 @@ request({ url: url, timeout: 5000 }, function (error, response, body) {
     }
 
     // exec logic
-    execLogic(resultData);
+    execLogic();
 });
 //////////////////////
 
@@ -476,6 +476,6 @@ io.on('initIpfs', function (data) {
         }
 
         // exec logic
-        execLogic(resultData);
+        execLogic();
     });
 });
