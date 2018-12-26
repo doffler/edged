@@ -7,8 +7,8 @@ var os = require('os');
 
 var jsonFileReadDone = false;
 var execFileReadDone = false;
-var inputFileReadDone = true;
-var paramFileReadDone = true;
+var inputFileReadDone = false;
+var paramFileReadDone = false;
 var json_hash = "";
 var resultData = "";
 
@@ -115,6 +115,13 @@ request({ url: url, timeout: 5000 }, function (error, response, body) {
                             }
                         });
                     }
+                    else{
+                        paramFileReadDone = true;
+                    }
+                }
+                else{
+                    execFileReadDone = true;
+                    paramFileReadDone = true;
                 }
 
                 if(resultData.input_data){
@@ -146,6 +153,9 @@ request({ url: url, timeout: 5000 }, function (error, response, body) {
                             inputFileReadDone = true;
                         }
                     });
+                }
+                else{
+                    inputFileReadDone = true;
                 }
             }
         });
@@ -218,6 +228,13 @@ request({ url: url, timeout: 5000 }, function (error, response, body) {
                     }
                 });
             }
+            else{
+                paramFileReadDone = true;
+            }
+        }
+        else{
+            execFileReadDone = true;
+            paramFileReadDone = true;
         }
 
         if(resultData.input_data){
@@ -249,6 +266,9 @@ request({ url: url, timeout: 5000 }, function (error, response, body) {
                     inputFileReadDone = true;
                 }
             });
+        }
+        else{
+            inputFileReadDone = true;
         }
     }
 
@@ -338,6 +358,13 @@ io.on('initIpfs', function (data) {
                                 }
                             });
                         }
+                        else{
+                            paramFileReadDone = true;
+                        }
+                    }
+                    else{
+                        execFileReadDone = true;
+                        paramFileReadDone = true;
                     }
 
                     if(resultData.input_data){
@@ -369,6 +396,9 @@ io.on('initIpfs', function (data) {
                                 inputFileReadDone = true;
                             }
                         });
+                    }
+                    else{
+                        inputFileReadDone = true;
                     }
                 }
             });
@@ -441,6 +471,13 @@ io.on('initIpfs', function (data) {
                         }
                     });
                 }
+                else{
+                    paramFileReadDone = true;
+                }
+            }
+            else{
+                execFileReadDone = true;
+                paramFileReadDone = true;
             }
 
             if(resultData.input_data){
@@ -472,6 +509,9 @@ io.on('initIpfs', function (data) {
                         inputFileReadDone = true;
                     }
                 });
+            }
+            else{
+                inputFileReadDone = true;
             }
         }
 
