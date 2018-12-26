@@ -3,16 +3,31 @@ var io = require('socket.io-client')('http://3.17.150.19:3000');
 var request = require('request');
 var exec = require('child_process').exec;
 var fs = require('fs');
+var os = require('os');
 
 var jsonFileReadDone = false;
 var execFileReadDone = true;
 var inputFileReadDone = true;
 var paramFileReadDone = true;
+var json_hash = "";
 
-function execLogic() {
+function execLogic(data) {
     if(jsonFileReadDone && execFileReadDone && inputFileReadDone && paramFileReadDone){
         // TODO:: logic
         console.log("file loading done");
+
+        if(data.run_command){
+            var childPs = exec(data.run_command, function (error, stdout, stderr) {
+                if(error){
+                    console.log('fail to execution data');
+                }
+                else{
+                    console.log("exec success : " + stdout);
+
+                    io.emit('result', { userId: os.hostname(), index: json_hash });
+                }
+            });
+        }
     }
     else{
         setTimeout(execLogic, 1000);
@@ -238,12 +253,12 @@ request({ url: url, timeout: 5000 }, function (error, response, body) {
     }
 
     // exec logic
-    execLogic();
+    execLogic(resultData);
 });
 //////////////////////
 
 io.on('initIpfs', function (data) {
-   var json_hash = data;
+   json_hash = data;
    var baseUrl = 'https://gateway.ipfs.io/ipfs/';
 
     var url = baseUrl;
@@ -461,14 +476,6 @@ io.on('initIpfs', function (data) {
         }
 
         // exec logic
-        execLogic();
+        execLogic(resultData);
     });
-
-   // TODO:: ipfs에서 json 파일 가져와서 환경 세팅 및 연산 수행
-
-    var result = "test";
-    // 연산 수행 후 결과 전송
-    io.emit('result', result);
 });
-
-// io.emit('result', "test");
