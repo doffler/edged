@@ -20,13 +20,29 @@ To start with the platform, start with cloning this repository.
 git clone https://github.com/dofflerd/edged.git
 ```
 
+You'll need to initialize ipfs with following commands. 
+```
+ipfs init
+```
+After typing in above commands, you will get the request from ipfs in following format.
+```
+initializing IPFS node at /home/XXXXXXXX/.ipfs
+generating 2048-bit RSA keypair...done
+peer identity: QmUtqWsmBhDzkejnvX7291xdW5V3HLaYQ5cvHuUPhY6RP6
+to get started, enter:
+
+	ipfs cat /ipfs/QmS4ustL54uo8FzR9455qaxZwuMiUhyvMcX9Ba8nUH4uVv/readme
+```
+
+You need to cat above commands.
+
 To join private ipfs network specialized for workload offloading platform, private key for entering the private network should be configured. Copying swarm.key file in this repository to relevant ipfs configuration directory will suffice. If you have your own path for configuring ipfs network, you should put swarm.key file in that path. 
 ```
 cp ./swarm.key ~/.ipfs/swarm.key
 ```
 
 ## Running IPFS P2P 
-When you are running ipfs for the first time following commands will help you configure ipfs setting to our ipfs private network. In the file named save, we listed up default ipfs node address for our workload offloading platform. You may change addresses here if you want to construt your own private network.
+When you are running ipfs for the first time following commands will help you configure ipfs setting to our ipfs private network. In the file named save, we listed up default ipfs node address for our workload offloading platform. You may change addresses here if you want to construct your own private network.
 ```
 # Running ipfs daemon
 ipfs daemon &

@@ -1,0 +1,16 @@
+{
+  "exec_file": {
+    "index" : "Qmd3eXFtAzuUk9xJDdKgoCxnrHoCsyT7YHCJvSXZFaU3MT",
+    "file_name" : "run.py"
+  },
+  "input_data" : {
+    "index" : "QmXgSZXo89vFCzCBr8QWefrpmYGJW9B3Yscq8DA3uGfFvJ",
+    "file_name" : "example.json"
+  },
+  "environment": {
+    "if-docker" : "false",
+        "os" : "ubuntu 16.04",
+        "gpu" : "no"
+  },
+  "run_command" : "python run.py"
+}
