@@ -1,337 +1,372 @@
-// socket io client connect
-// 필요한 require 정의
-// io: socket io client api
-// request: url call을 위한 api
-// exec: cli 실행을 위한 api
-// fs: file stream api
-// os: local 정보를 가져오기 위한 api
+// Socke IO server to transfer offloading requests and results
+// Default Setting : 3.17.150.19:3000
 var io = require('socket.io-client')('http://3.17.150.19:3000');
 var request = require('request');
 var exec = require('child_process').exec;
 var fs = require('fs');
 var os = require('os');
 
-// 모든 file 로딩 확인을 위한 boolean variable
+// default json file to get request information
+var requestJson = "example.json";
+var file_list = [];
+
 var jsonFileReadDone = false;
 var execFileReadDone = false;
 var inputFileReadDone = false;
 var paramFileReadDone = false;
-// input & output data variable
 var json_hash = "";
 var resultData = "";
 
-// input 로딩이 끝난 후 로직 실행
 function execLogic() {
-    if(jsonFileReadDone && execFileReadDone && inputFileReadDone && paramFileReadDone){
-        console.log("file loading done");
+  if(jsonFileReadDone && execFileReadDone
+      && inputFileReadDone && paramFileReadDone){
+    console.log("file loading done");
 
-        // input json 파일의 run_command 실행
-        if(resultData.run_command){
-            var childPs = exec(resultData.run_command, function (error, stdout, stderr) {
-                if(error){
-                    console.log('fail to execution data');
-                }
-                else{
-                    console.log("exec success : " + stdout);
-
-                    // 결과 및 사용자 정보 서버에 전송
-                    // TODO:: 결과 파일 전송 추가
-                    io.emit('result', { userId: os.hostname(), index: json_hash });
-                }
-            });
-        }
-    }
-    else{
-        // file loading이 안끝났으면 1초 주기로 재실행
-        setTimeout(execLogic, 1000);
-    }
-}
-
-// login 기록을 server에 추가
-io.emit("login", {
-    userid: os.hostname(),
-});
-
-// requester 가 보낸 연산 요청을 수행
-io.on('initIpfs', function (data) {
-   json_hash = data;
-   // ipfs에 업로드된 data를 가져오기 위한 url
-   var baseUrl = 'https://gateway.ipfs.io/ipfs/';
-
-    var url = baseUrl;
-    // requester가 보낸 json hash index를 baseUrl에 추가
-    url = baseUrl + json_hash;
-
-    // gateway.io에서 해당 json 파일을 요청
-    request({ url: url, timeout: 5000 }, function (error, response, body) {
+    if(resultData.run_command){
+      var childPs = exec(resultData.run_command, function(error,stdout,stderr) {
         if(error){
-            // gateway.io에서 가져오는걸 실패하여 cli 명령으로 ipfs와 통신
-            var childPs = exec('ipfs cat ' + data, function (error, stdout, stderr) {
-                if(error){
-                    console.log('fail to read ipfs data');
-                }
-                else{
-                    // json object 형식으로 output read
-                    resultData = JSON.parse(stdout);
-                    // json파일을 local에 저장
-                    var file = fs.createWriteStream('example.json');
-                    file.write(stdout);
-
-                    jsonFileReadDone = true;
-
-                    // json parse
-                    // exec_file - index: exec file ipfs hash index, file_name: 저장할 file명
-                    //             parameters: parameters file ipfs hash index, parameter_file: 저장할 file명
-                    // input_data -  index: input data ipfs hash index, file_name: 저장할 file명
-                    // run_command - 실행할 명령어
-                    if(resultData.exec_file){
-                        execFileReadDone = false;
-                        var index = resultData.exec_file.index;
-                        var file_name = resultData.exec_file.file_name;
-
-                        // get exec file
-                        var execUrl = baseUrl + index;
-                        // gateway.io에서 해당 파일을 요청
-                        request({ url: execUrl, timeout: 5000 }, function (error, response, body) {
-                            var execContent = "";
-                            if(error){
-                                // gateway.io에서 가져오는걸 실패하여 cli 명령으로 ipfs와 통신
-                                var childPs = exec('ipfs cat ' + index, function (error, stdout, stderr) {
-                                    if(error){
-                                        console.log('fail to read ipfs data');
-                                    }
-                                    else{
-                                        execContent = stdout;
-                                        // exec 파일을 local에 저장
-                                        var file = fs.createWriteStream(file_name);
-                                        file.write(execContent);
-                                        execFileReadDone = true;
-                                    }
-                                });
-                            }
-                            else{
-                                execContent = body;
-                                // exec 파일을 local에 저장
-                                var file = fs.createWriteStream(file_name);
-                                file.write(execContent);
-                                execFileReadDone = true;
-                            }
-                        });
-
-                        if(resultData.exec_file.parameters){
-                            parameter_file = false;
-                            var parameters = resultData.exec_file.parameters;
-                            var parameter_file = resultData.exec_file.parameter_file;
-
-                            // get parameters file
-                            var paramUrl = baseUrl + parameters;
-                            // gateway.io에서 해당 파일을 요청
-                            request({ url: paramUrl, timeout: 5000 }, function (error, response, body) {
-                                var paramContent = "";
-                                if(error){
-                                    // gateway.io에서 가져오는걸 실패하여 cli 명령으로 ipfs와 통신
-                                    var childPs = exec('ipfs cat ' + parameters, function (error, stdout, stderr) {
-                                        if(error){
-                                            console.log('fail to read ipfs data');
-                                        }
-                                        else{
-                                            paramContent = stdout;
-                                            // parameters 파일을 local에 저장
-                                            var file = fs.createWriteStream(parameter_file);
-                                            file.write(paramContent);
-                                            paramFileReadDone = true;
-                                        }
-                                    });
-                                }
-                                else{
-                                    paramContent = body;
-                                    // parameters 파일을 local에 저장
-                                    var file = fs.createWriteStream(parameter_file);
-                                    file.write(paramContent);
-                                    paramFileReadDone = true;
-                                }
-                            });
-                        }
-                        else{
-                            paramFileReadDone = true;
-                        }
-                    }
-                    else{
-                        execFileReadDone = true;
-                        paramFileReadDone = true;
-                    }
-
-                    if(resultData.input_data){
-                        inputFileReadDone = false;
-                        var index = resultData.input_data.index;
-                        var file_name = resultData.input_data.file_name;
-
-                        // get input data
-                        var inputUrl = baseUrl + index;
-                        // gateway.io에서 해당 파일을 요청
-                        request({ url: inputUrl, timeout: 5000 }, function (error, response, body) {
-                            var inputContent = "";
-                            if(error){
-                                // gateway.io에서 가져오는걸 실패하여 cli 명령으로 ipfs와 통신
-                                var childPs = exec('ipfs cat ' + index, function (error, stdout, stderr) {
-                                    if(error){
-                                        console.log('fail to read ipfs data');
-                                    }
-                                    else{
-                                        inputContent = stdout;
-                                        // input data를 local에 저장
-                                        var file = fs.createWriteStream(file_name);
-                                        file.write(inputContent);
-                                        inputFileReadDone = true;
-                                    }
-                                });
-                            }
-                            else{
-                                inputContent = body;
-                                // input data를 local에 저장
-                                var file = fs.createWriteStream(file_name);
-                                file.write(inputContent);
-                                inputFileReadDone = true;
-                            }
-                        });
-                    }
-                    else{
-                        inputFileReadDone = true;
-                    }
-                }
-            });
+          console.log(error);
+          console.log('failed to execute');
         }
         else{
-            // json object 형식으로 output read
-            resultData = JSON.parse(stdout);
-            // json파일을 local에 저장
-            var file = fs.createWriteStream('example.json');
-            file.write(stdout);
+          console.log("exec success : " + stdout);
+          io.emit('result', { userId: os.hostname(), index: json_hash });
 
-            jsonFileReadDone = true;
+          // reset flags to get new offloading request
+          jsonFileReadDone = false;
+          execFileReadDone = false;
+          inputFileReadDone = false;
+          paramFileReadDone = false;
+        }
+      });
+    }
+  }
+  else{
+    setTimeout(execLogic, 1000);
+  }
+}
 
-            // json parse
-            // exec_file - index: exec file ipfs hash index, file_name: 저장할 file명
-            //             parameters: parameters file ipfs hash index, parameter_file: 저장할 file명
-            // input_data -  index: input data ipfs hash index, file_name: 저장할 file명
-            // run_command - 실행할 명령어
-            if(resultData.exec_file){
-                execFileReadDone = false;
-                var index = resultData.exec_file.index;
-                var file_name = resultData.exec_file.file_name;
+io.on('initIpfs', function (data) {
+  json_hash = data;
+  var baseUrl = 'https://gateway.ipfs.io/ipfs/';
 
-                // get exec file
-                var execUrl = baseUrl + index;
-                // gateway.io에서 해당 파일을 요청
-                request({ url: execUrl, timeout: 5000 }, function (error, response, body) {
-                    var execContent = "";
+  var url = baseUrl;
+  url = baseUrl + json_hash;
+
+  request({ url: url, timeout: 1000 }, function (error, response, body) {
+    resultData = "";
+    if(error){
+      var childPs = exec('ipfs cat ' + data, function (error, stdout, stderr) {
+        if(error){
+          console.log('fail to read ipfs data');
+        }
+        else{
+          resultData = JSON.parse(stdout);
+          var json_file = fs.createWriteStream(requestJson);
+          json_file.write(stdout);
+          jsonFileReadDone = true;
+
+          // json parse
+          if(resultData.exec_file){
+            execFileReadDone = false;
+            var exec_index = resultData.exec_file.index;
+            var exec_name = resultData.exec_file.file_name;
+            console.log(exec_name);
+
+            // get exec file
+            // TODO : exec file can be given in form of directory, we should
+            //        seperate the code logic for directory and just file format
+            if(resultData.exec_file.isdir){
+              var childPs = exec('ipfs get --output ' + exec_name + " " + exec_index,
+                  function(error,stdout,stderr){
                     if(error){
-                        // gateway.io에서 가져오는걸 실패하여 cli 명령으로 ipfs와 통신
-                        var childPs = exec('ipfs cat ' + index, function (error, stdout, stderr) {
-                            if(error){
-                                console.log('fail to read ipfs data');
-                            }
-                            else{
-                                execContent = stdout;
-                                // exec 파일을 local에 저장
-                                var file = fs.createWriteStream(file_name);
-                                file.write(execContent);
-                                execFileReadDone = true;
-                            }
-                        });
+                      console.log('fail to read ipfs directory');
                     }
                     else{
-                        execContent = body;
-                        // exec 파일을 local에 저장
-                        var file = fs.createWriteStream(file_name);
-                        file.write(execContent);
-                        execFileReadDone = true;
+                      console.log('exec_file successfully loaded');
+                      execFileReadDone = true;
+                      file_list.push(exec_name);
                     }
-                });
-
-                if(resultData.exec_file.parameters){
-                    parameter_file = false;
-                    var parameters = resultData.exec_file.parameters;
-                    var parameter_file = resultData.exec_file.parameter_file;
-
-                    // get parameters file
-                    var paramUrl = baseUrl + parameters;
-                    // gateway.io에서 해당 파일을 요청
-                    request({ url: paramUrl, timeout: 5000 }, function (error, response, body) {
-                        var paramContent = "";
+                  });
+            }
+            else{
+              var execUrl = baseUrl + exec_index;
+              request({ url: execUrl, timeout: 1000 }, function(error,response,body){
+                var execContent = "";
+                if(error){
+                  var childPs = exec('ipfs cat ' + index,
+                      function (error, stdout, stderr) {
                         if(error){
-                            // gateway.io에서 가져오는걸 실패하여 cli 명령으로 ipfs와 통신
-                            var childPs = exec('ipfs cat ' + parameters, function (error, stdout, stderr) {
-                                if(error){
-                                    console.log('fail to read ipfs data');
-                                }
-                                else{
-                                    paramContent = stdout;
-                                    // parameters 파일을 local에 저장
-                                    var file = fs.createWriteStream(parameter_file);
-                                    file.write(paramContent);
-                                    paramFileReadDone = true;
-                                }
-                            });
+                          console.log('fail to read ipfs data');
                         }
                         else{
-                            paramContent = body;
-                            // parameters 파일을 local에 저장
-                            var file = fs.createWriteStream(parameter_file);
-                            file.write(paramContent);
-                            paramFileReadDone = true;
+                          execContent = stdout;
+                          var exec_file = fs.createWriteStream(exec_name);
+                          exec_file.write(execContent);
+                          execFileReadDone = true;
+                          file_list.push(exec_name);
                         }
-                    });
+                      });
                 }
                 else{
-                    paramFileReadDone = true;
+                  execContent = body;
+                  var exec_file = fs.createWriteStream(exec_name);
+                  exec_file.write(execContent);
+                  execFileReadDone = true;
+                  file_list.push(exec_name);
                 }
-            }
-            else{
-                execFileReadDone = true;
-                paramFileReadDone = true;
+              });
             }
 
-            if(resultData.input_data){
-                inputFileReadDone = false;
-                var index = resultData.input_data.index;
-                var file_name = resultData.input_data.file_name;
+            if(resultData.parameters){
+              paramFileReadDone = false;
+              var parameters = resultData.parameters.index;
+              var parameter_name = resultData.parameters.file_name;
 
-                // get input data
-                var inputUrl = baseUrl + index;
-                // gateway.io에서 해당 파일을 요청
-                request({ url: inputUrl, timeout: 5000 }, function (error, response, body) {
-                    var inputContent = "";
-                    if(error){
-                        // gateway.io에서 가져오는걸 실패하여 cli 명령으로 ipfs와 통신
-                        var childPs = exec('ipfs cat ' + index, function (error, stdout, stderr) {
-                            if(error){
-                                console.log('fail to read ipfs data');
-                            }
-                            else{
-                                inputContent = stdout;
-                                // input data를 local에 저장
-                                var file = fs.createWriteStream(file_name);
-                                file.write(inputContent);
-                                inputFileReadDone = true;
-                            }
+              // get parameters file
+              // TODO : multiple parameter files can be given
+              //        separate code to process multiple paramter files.
+              //        In this case, paramter index, name will be given in
+              //        list form in the json file
+              //        Also, it can be given as a directory index. In this
+              //        case, index hash for directory and name of the directory
+              //        will be given
+              if(resultData.parameters.isdir){
+                var childPs = exec('ipfs get --output ' + parameter_name
+                    + " " + parameters, function(error,stdout,stderr){
+                  if(error){
+                    console.log('fail to read parameter data');
+                  }
+                  else{
+                    console.log('parameter data successfully loaded');
+                    paramFileReadDone = true;
+                    file_list.push(parameter_name);
+                  }
+                });
+              }
+              else{
+                if(Array.isArray(parameters)){
+                  for(var i=0;i<parameters.length;i++){
+                    paramFileReadDone = false;
+                    var paramUrl = baseUrl + parameters[i];
+                    request({ url: paramUrl, timeout: 1000 }, function(error,response,body){
+                      var paramContent = "";
+                      if(error){
+                        var childPs = exec('ipfs cat ' + parameters[i], function(error,stdout,stderr){
+                          if(error){
+                            console.log('fail to read parameter data');
+                          }
+                          else{
+                            paramContent = stdout;
+                            var parameter_file = fs.createWriteStream(parameter_name[i]);
+                            parameter_file.write(paramContent);
+                            paramFileReadDone = true;
+                            console.log('parameter data successfully loaded');
+                            file_list.push(parameter_name[i])
+                          }
                         });
+                      }
+                      else{
+                        paramContent = body;
+                        var parameter_file = fs.createWriteStream(parameter_name[i]);
+                        parameter_file.write(paramContent);
+                        paramFileReadDone = true;
+                        file_list.push(parameter_name[i]);
+                      }
+                    });
+                  }
+                }
+                else{
+                  var paramUrl = baseUrl + parameters;
+                  request({ url: paramUrl, timeout: 1000 }, function(error,response,body){
+                    var paramContent = "";
+                    if(error){
+                      var childPs = exec('ipfs cat ' + parameters, function(error,stdout,stderr){
+                        if(error){
+                          console.log('fail to read parameter data');
+                        }
+                        else{
+                          paramContent = stdout;
+                          var parameter_file = fs.createWriteStream(parameter_name);
+                          parameter_file.write(paramContent);
+                          paramFileReadDone = true;
+                          console.log('parameter data successfully loaded')
+                        }
+                      });
                     }
                     else{
-                        inputContent = body;
-                        // input data를 local에 저장
-                        var file = fs.createWriteStream(file_name);
-                        file.write(inputContent);
-                        inputFileReadDone = true;
+                      paramContent = body;
+                      var parameter_file = fs.createWriteStream(parameter_file);
+                      parameter_file.write(paramContent);
+                      paramFileReadDone = true;
+                      file_list.push(parameter_file);
                     }
-                });
+                  });
+                }
+              }
             }
             else{
-                inputFileReadDone = true;
+              paramFileReadDone = true;
             }
-        }
+          }
+          else{
+            execFileReadDone = true;
+            paramFileReadDone = true;
+          }
 
-        // exec logic
-        execLogic();
-    });
+          if(resultData.input_data){
+            inputFileReadDone = false;
+            var input_index = resultData.input_data.index;
+            var input_name = resultData.input_data.file_name;
+            console.log(input_name);
+
+            // get exec file
+            var inputUrl = baseUrl + input_index;
+            request({ url: inputUrl, timeout: 1000 }, function(error,response,body){
+              var inputContent = "";
+              if(error){
+                var childPs = exec('ipfs cat ' + input_index, function(error,stdout,stderr){
+                  if(error){
+                    console.log('fail to read ipfs data');
+                  }
+                  else{
+                    inputContent = stdout;
+                    var input_file = fs.createWriteStream(input_name);
+                    input_file.write(inputContent);
+                    inputFileReadDone = true;
+                    console.log('input data successfully loaded');
+                    file_list.push(input_file);
+                  }
+                });
+              }
+              else{
+                inputContent = body;
+                var input_file = fs.createWriteStream(input_name);
+                input_file.write(inputContent);
+                inputFileReadDone = true;
+                file_list.push(input_file);
+              }
+            });
+          }
+          else{
+            inputFileReadDone = true;
+          }
+        }
+      });
+    }
+    else{
+      resultData = JSON.parse(body);
+      var file = fs.createWriteStream('example.json');
+      file.write(body);
+
+      jsonFileReadDone = true;
+
+      // json parse
+      if(resultData.exec_file){
+        execFileReadDone = false;
+        var index = resultData.exec_file.index;
+        var exec_name = resultData.exec_file.file_name;
+
+        // get exec file
+        var execUrl = baseUrl + index;
+        request({ url: execUrl, timeout: 1000 }, function(error,response,body){
+          var execContent = "";
+          if(error){
+            var childPs = exec('ipfs cat ' + index, function(error,stdout,stderr){
+              if(error){
+                console.log('fail to read ipfs data');
+              }
+              else{
+                execContent = stdout;
+                var file = fs.createWriteStream(exec_name);
+                file.write(execContent);
+                execFileReadDone = true;
+              }
+            });
+          }
+          else{
+            execContent = body;
+            var file = fs.createWriteStream(exec_name);
+            file.write(execContent);
+            execFileReadDone = true;
+          }
+        });
+
+        if(resultData.parameters){
+          parameter_file = false;
+          var parameters = resultData.exec_file.parameters;
+          var parameter_file = resultData.exec_file.parameter_file;
+
+          // get parameters file
+          var paramUrl = baseUrl + parameters;
+          request({ url: paramUrl, timeout: 1000 }, function(error,response,body){
+            var paramContent = "";
+            if(error){
+              var childPs = exec('ipfs cat ' + parameters, function(error,stdout,stderr){
+                if(error){
+                  console.log('fail to read ipfs data');
+                }
+                else{
+                  paramContent = stdout;
+                  var file = fs.createWriteStream(parameter_file);
+                  file.write(paramContent);
+                  paramFileReadDone = true;
+                }
+              });
+            }
+            else{
+              paramContent = body;
+              var file = fs.createWriteStream(parameter_file);
+              file.write(paramContent);
+              paramFileReadDone = true;
+            }
+          });
+        }
+        else{
+          paramFileReadDone = true;
+        }
+      }
+      else{
+        execFileReadDone = true;
+        paramFileReadDone = true;
+      }
+
+      if(resultData.input_data){
+        inputFileReadDone = false;
+        var index = resultData.input_data.index;
+        var input_name = resultData.input_data.file_name;
+
+        // get exec file
+        var inputUrl = baseUrl + index;
+        request({ url: inputUrl, timeout: 1000 }, function(error,response,body){
+          var inputContent = "";
+          if(error){
+            var childPs = exec('ipfs cat ' + index, function(error,stdout,stderr){
+              if(error){
+                console.log('fail to read ipfs data');
+              }
+              else{
+                inputContent = stdout;
+                var file = fs.createWriteStream(input_name);
+                file.write(inputContent);
+                inputFileReadDone = true;
+              }
+            });
+          }
+          else{
+            inputContent = body;
+            var file = fs.createWriteStream(input_name);
+            file.write(inputContent);
+            inputFileReadDone = true;
+          }
+        });
+      }
+      else{
+        inputFileReadDone = true;
+      }
+    }
+
+    // exec logic
+    execLogic();
+  });
 });
