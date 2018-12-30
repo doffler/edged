@@ -52,6 +52,7 @@ io.on('initIpfs', function (data) {
 
   var url = baseUrl;
   url = baseUrl + json_hash;
+  console.log("start : " + data);
 
   request({ url: url, timeout: 1000 }, function (error, response, body) {
     resultData = "";
@@ -94,7 +95,7 @@ io.on('initIpfs', function (data) {
               request({ url: execUrl, timeout: 1000 }, function(error,response,body){
                 var execContent = "";
                 if(error){
-                  var childPs = exec('ipfs cat ' + index,
+                  var childPs = exec('ipfs cat ' + exec_index,
                       function (error, stdout, stderr) {
                         if(error){
                           console.log('fail to read ipfs data : exec file');
