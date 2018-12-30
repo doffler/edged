@@ -8,6 +8,7 @@ var os = require('os');
 
 // default json file to get request information
 var requestJson = "example.json";
+var file_list = [];
 
 var jsonFileReadDone = false;
 var execFileReadDone = false;
@@ -30,6 +31,12 @@ function execLogic() {
         else{
           console.log("exec success : " + stdout);
           io.emit('result', { userId: os.hostname(), index: json_hash });
+
+          // reset flags to get new offloading request
+          jsonFileReadDone = false;
+          execFileReadDone = false;
+          inputFileReadDone = false;
+          paramFileReadDone = false;
         }
       });
     }
@@ -67,6 +74,8 @@ io.on('initIpfs', function (data) {
             console.log(exec_name);
 
             // get exec file
+            // TODO : exec file can be given in form of directory, we should
+            //        seperate the code logic for directory and just file format
             var execUrl = baseUrl + exec_index;
             request({ url: execUrl, timeout: 1000 }, function(error,response,body){
               var execContent = "";
@@ -79,6 +88,7 @@ io.on('initIpfs', function (data) {
                   else{
                     console.log('exec_file successfully loaded');
                     execFileReadDone = true;
+                    file_list.push(exec_name);
                   }
                 });
                 // else{
@@ -100,6 +110,7 @@ io.on('initIpfs', function (data) {
                 var exec_file = fs.createWriteStream(exec_name);
                 exec_file.write(execContent);
                 execFileReadDone = true;
+                file_list.push(exec_name);
               }
             });
 
@@ -109,20 +120,26 @@ io.on('initIpfs', function (data) {
               var parameter_name = resultData.parameters.file_name;
 
               // get parameters file
+              // TODO : multiple parameter files can be given
+              //        separate code to process multiple paramter files.
+              //        In this case, paramter index, name will be given in
+              //        list form in the json file
+              //        Also, it can be given as a directory index. In this
+              //        case, index hash for directory and name of the directory
+              //        will be given
               var paramUrl = baseUrl + parameters;
               request({ url: paramUrl, timeout: 1000 }, function(error,response,body){
                 var paramContent = "";
                 if(error){
-                  var childPs = exec('ipfs cat ' + parameters, function(error,stdout,stderr){
+                  var childPs = exec('ipfs get --output ' + parameter_name
+                        + " " + parameters, function(error,stdout,stderr){
                     if(error){
                       console.log('fail to read parameter data');
                     }
                     else{
-                      paramContent = stdout;
-                      var parameter_file = fs.createWriteStream(parameter_name);
-                      parameter_file.write(paramContent);
-                      paramFileReadDone = true;
                       console.log('parameter data successfully loaded')
+                      paramFileReadDone = true;
+                      file_list.push(parameter_file);
                     }
                   });
                 }
@@ -131,6 +148,7 @@ io.on('initIpfs', function (data) {
                   var parameter_file = fs.createWriteStream(parameter_file);
                   parameter_file.write(paramContent);
                   paramFileReadDone = true;
+                  file_list.push(parameter_file);
                 }
               });
             }
@@ -164,6 +182,7 @@ io.on('initIpfs', function (data) {
                     input_file.write(inputContent);
                     inputFileReadDone = true;
                     console.log('input data successfully loaded');
+                    file_list.push(input_file);
                   }
                 });
               }
@@ -172,6 +191,7 @@ io.on('initIpfs', function (data) {
                 var input_file = fs.createWriteStream(input_name);
                 input_file.write(inputContent);
                 inputFileReadDone = true;
+                file_list.push(input_file);
               }
             });
           }
@@ -296,16 +316,4 @@ io.on('initIpfs', function (data) {
     // exec logic
     execLogic();
   });
-
-  // fs.unlink(requestJson, function(err){
-  //   if(err)
-  //     throw err;
-  // });
-  //
-  // for(var i=0; i < file_list.length; i++){
-  //   fs.unlink(file_list[i], function(err){
-  //     if(err)
-  //       throw err;
-  //   });
-  // }
 });
