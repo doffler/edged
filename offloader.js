@@ -58,7 +58,7 @@ io.on('initIpfs', function (data) {
     if(error){
       var childPs = exec('ipfs cat ' + data, function (error, stdout, stderr) {
         if(error){
-          console.log('fail to read ipfs data');
+          console.log('fail to read ipfs data : json file');
         }
         else{
           resultData = JSON.parse(stdout);
@@ -97,7 +97,7 @@ io.on('initIpfs', function (data) {
                   var childPs = exec('ipfs cat ' + index,
                       function (error, stdout, stderr) {
                         if(error){
-                          console.log('fail to read ipfs data');
+                          console.log('fail to read ipfs data : exec file');
                         }
                         else{
                           execContent = stdout;
@@ -227,7 +227,7 @@ io.on('initIpfs', function (data) {
               if(error){
                 var childPs = exec('ipfs cat ' + input_index, function(error,stdout,stderr){
                   if(error){
-                    console.log('fail to read ipfs data');
+                    console.log('fail to read ipfs data : input data');
                   }
                   else{
                     inputContent = stdout;
@@ -256,7 +256,7 @@ io.on('initIpfs', function (data) {
     }
     else{
       resultData = JSON.parse(body);
-      var file = fs.createWriteStream('example.json');
+      var file = fs.createWriteStream(requestJson);
       file.write(body);
 
       jsonFileReadDone = true;
@@ -264,63 +264,141 @@ io.on('initIpfs', function (data) {
       // json parse
       if(resultData.exec_file){
         execFileReadDone = false;
-        var index = resultData.exec_file.index;
+        var exec_index = resultData.exec_file.index;
         var exec_name = resultData.exec_file.file_name;
+        console.log(exec_name);
 
         // get exec file
-        var execUrl = baseUrl + index;
-        request({ url: execUrl, timeout: 1000 }, function(error,response,body){
-          var execContent = "";
-          if(error){
-            var childPs = exec('ipfs cat ' + index, function(error,stdout,stderr){
+        // TODO : exec file can be given in form of directory, we should
+        //        seperate the code logic for directory and just file format
+        if(resultData.exec_file.isdir){
+          var childPs = exec('ipfs get --output ' + exec_name + " " + exec_index,
+              function(error,stdout,stderr){
+                if(error){
+                  console.log('fail to read ipfs directory');
+                }
+                else{
+                  console.log('exec_file successfully loaded');
+                  execFileReadDone = true;
+                  file_list.push(exec_name);
+                }
+              });
+        }
+        else{
+          var execUrl = baseUrl + exec_index;
+          request({ url: execUrl, timeout: 1000 }, function(error,response,body){
+            var execContent = "";
+            if(error){
+              var childPs = exec('ipfs cat ' + index,
+                  function (error, stdout, stderr) {
+                    if(error){
+                      console.log('fail to read ipfs data : exec file');
+                    }
+                    else{
+                      execContent = stdout;
+                      var exec_file = fs.createWriteStream(exec_name);
+                      exec_file.write(execContent);
+                      execFileReadDone = true;
+                      file_list.push(exec_name);
+                    }
+                  });
+            }
+            else{
+              execContent = body;
+              var exec_file = fs.createWriteStream(exec_name);
+              exec_file.write(execContent);
+              execFileReadDone = true;
+              file_list.push(exec_name);
+            }
+          });
+        }
+
+        if(resultData.parameters){
+          paramFileReadDone = false;
+          var parameters = resultData.parameters.index;
+          var parameter_name = resultData.parameters.file_name;
+
+          // get parameters file
+          // TODO : multiple parameter files can be given
+          //        separate code to process multiple paramter files.
+          //        In this case, paramter index, name will be given in
+          //        list form in the json file
+          //        Also, it can be given as a directory index. In this
+          //        case, index hash for directory and name of the directory
+          //        will be given
+          if(resultData.parameters.isdir){
+            var childPs = exec('ipfs get --output ' + parameter_name
+                + " " + parameters, function(error,stdout,stderr){
               if(error){
-                console.log('fail to read ipfs data');
+                console.log('fail to read parameter data');
               }
               else{
-                execContent = stdout;
-                var file = fs.createWriteStream(exec_name);
-                file.write(execContent);
-                execFileReadDone = true;
+                console.log('parameter data successfully loaded');
+                paramFileReadDone = true;
+                file_list.push(parameter_name);
               }
             });
           }
           else{
-            execContent = body;
-            var file = fs.createWriteStream(exec_name);
-            file.write(execContent);
-            execFileReadDone = true;
-          }
-        });
-
-        if(resultData.parameters){
-          parameter_file = false;
-          var parameters = resultData.exec_file.parameters;
-          var parameter_file = resultData.exec_file.parameter_file;
-
-          // get parameters file
-          var paramUrl = baseUrl + parameters;
-          request({ url: paramUrl, timeout: 1000 }, function(error,response,body){
-            var paramContent = "";
-            if(error){
-              var childPs = exec('ipfs cat ' + parameters, function(error,stdout,stderr){
+            if(Array.isArray(parameters)){
+              for(var i=0;i<parameters.length;i++){
+                paramFileReadDone = false;
+                var paramUrl = baseUrl + parameters[i];
+                request({ url: paramUrl, timeout: 1000 }, function(error,response,body){
+                  var paramContent = "";
+                  if(error){
+                    var childPs = exec('ipfs cat ' + parameters[i], function(error,stdout,stderr){
+                      if(error){
+                        console.log('fail to read parameter data');
+                      }
+                      else{
+                        paramContent = stdout;
+                        var parameter_file = fs.createWriteStream(parameter_name[i]);
+                        parameter_file.write(paramContent);
+                        paramFileReadDone = true;
+                        console.log('parameter data successfully loaded');
+                        file_list.push(parameter_name[i])
+                      }
+                    });
+                  }
+                  else{
+                    paramContent = body;
+                    var parameter_file = fs.createWriteStream(parameter_name[i]);
+                    parameter_file.write(paramContent);
+                    paramFileReadDone = true;
+                    file_list.push(parameter_name[i]);
+                  }
+                });
+              }
+            }
+            else{
+              var paramUrl = baseUrl + parameters;
+              request({ url: paramUrl, timeout: 1000 }, function(error,response,body){
+                var paramContent = "";
                 if(error){
-                  console.log('fail to read ipfs data');
+                  var childPs = exec('ipfs cat ' + parameters, function(error,stdout,stderr){
+                    if(error){
+                      console.log('fail to read parameter data');
+                    }
+                    else{
+                      paramContent = stdout;
+                      var parameter_file = fs.createWriteStream(parameter_name);
+                      parameter_file.write(paramContent);
+                      paramFileReadDone = true;
+                      console.log('parameter data successfully loaded')
+                    }
+                  });
                 }
                 else{
-                  paramContent = stdout;
-                  var file = fs.createWriteStream(parameter_file);
-                  file.write(paramContent);
+                  paramContent = body;
+                  var parameter_file = fs.createWriteStream(parameter_file);
+                  parameter_file.write(paramContent);
                   paramFileReadDone = true;
+                  file_list.push(parameter_file);
                 }
               });
             }
-            else{
-              paramContent = body;
-              var file = fs.createWriteStream(parameter_file);
-              file.write(paramContent);
-              paramFileReadDone = true;
-            }
-          });
+          }
         }
         else{
           paramFileReadDone = true;
@@ -333,31 +411,35 @@ io.on('initIpfs', function (data) {
 
       if(resultData.input_data){
         inputFileReadDone = false;
-        var index = resultData.input_data.index;
+        var input_index = resultData.input_data.index;
         var input_name = resultData.input_data.file_name;
+        console.log(input_name);
 
         // get exec file
-        var inputUrl = baseUrl + index;
+        var inputUrl = baseUrl + input_index;
         request({ url: inputUrl, timeout: 1000 }, function(error,response,body){
           var inputContent = "";
           if(error){
-            var childPs = exec('ipfs cat ' + index, function(error,stdout,stderr){
+            var childPs = exec('ipfs cat ' + input_index, function(error,stdout,stderr){
               if(error){
-                console.log('fail to read ipfs data');
+                console.log('fail to read ipfs data : input data');
               }
               else{
                 inputContent = stdout;
-                var file = fs.createWriteStream(input_name);
-                file.write(inputContent);
+                var input_file = fs.createWriteStream(input_name);
+                input_file.write(inputContent);
                 inputFileReadDone = true;
+                console.log('input data successfully loaded');
+                file_list.push(input_file);
               }
             });
           }
           else{
             inputContent = body;
-            var file = fs.createWriteStream(input_name);
-            file.write(inputContent);
+            var input_file = fs.createWriteStream(input_name);
+            input_file.write(inputContent);
             inputFileReadDone = true;
+            file_list.push(input_file);
           }
         });
       }
