@@ -30,7 +30,8 @@ function execLogic() {
         }
         else{
           console.log("exec success : " + stdout);
-          io.emit('result', { userId: os.hostname(), index: json_hash });
+          io.emit('result', { userId: os.hostname(), index: json_hash,
+              output: stdout });
 
           // reset flags to get new offloading request
           jsonFileReadDone = false;

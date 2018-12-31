@@ -62,7 +62,6 @@ def test(model_directory, input_image):
 
     y_final = sess.run(y, feed_dict={x: test_img, is_training: False})
     print("prediction value : {}".format(y_final[0].argmax()))
-    print(y_final)
 
 if __name__ == '__main__':
     # Parse argument
