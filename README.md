@@ -59,7 +59,7 @@ You need to cat above commands.
 #### IPFS Private network setting
 To start with the platform, start with cloning this repository.
 ```
-git clone https://github.com/dofflerd/edged.git
+git clone https://github.com/doffler/edged.git
 ```
 
 To join private ipfs network specialized for workload offloading platform, private key for entering the private network should be configured. Copying swarm.key file in this repository to relevant ipfs configuration directory will suffice. If you have your own path for configuring ipfs network, you should put swarm.key file in that path.
