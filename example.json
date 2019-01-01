@@ -1,0 +1,20 @@
+{
+  "environment": {
+    "if-docker": "false",
+    "os": "ubuntu 16.04",
+    "gpu": "no"
+  },
+  "run_command": "python mnist_cnn_test.py --model-dir ./model --input_image ./3.jpg",
+  "exec_file": {
+    "file_name": "mnist_cnn_test.py",
+    "index": "QmTZSFiSqR9YMhSryy7ug51ciqdYm8BD1m77qnZ4GvWvv4"
+  },
+  "parameters": {
+    "file_name": "model",
+    "index": "QmNrZxYhsqvZfgbabDXxzJNisTj1MvrD7h1VsftPg7da5c"
+  },
+  "input_data": {
+    "file_name": "3.jpg",
+    "index": "QmZzn9BvHuF8Kr3iCEg8A823zLqCCRGPrmnYHR8M8zGBgb"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "environment": {
+    "if-docker" : "false",
+        "os" : "ubuntu 16.04",
+        "gpu" : "no"
+  },
+  "run_command" : "python exec_offload.py input.json"
+}

@@ -36,8 +36,8 @@ io.emit("ipfsSetup", json_hash);
 io.on('offloadingResult', function (data) {
   // log 남기기
   if(json_hash === data.index){
-    console.log(getDateTime() + " \tjson index: "
-        + data.index + "\thostname: " + data.userId);
+    console.log(getDateTime() + " \tjson index: " + data.index + "\thostname "
+    + data.userId + '\noutput:' + data.output);
     fs.appendFile("./request_log/log.txt", getDateTime() + ":"
           + data.index + "\t" + data.userId + "\t" + json_hash, function(err){
         if(err) throw err;

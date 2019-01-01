@@ -1,0 +1,16 @@
+{
+  "exec_file": {
+    "index" : "Qmf8QkvhnrTHe5LPh16hczDYbTDXkaDojCFqK3BWr8YozU",
+    "file_name" : "exec_offload.py"
+  },
+  "input_data" : {
+    "index" : "QmZAADs9z2FnrziMRwsuBrcHJCH4XpCcoVv82zm6ermjsB",
+    "file_name" : "input.json"
+  },
+  "environment": {
+    "if-docker" : "false",
+        "os" : "ubuntu 16.04",
+        "gpu" : "no"
+  },
+  "run_command" : "python exec_offload.py input.json"
+}

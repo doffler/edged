@@ -4,7 +4,7 @@ var io = require('socket.io')(server);
 
 /* GET home page. */
 app.get('/', (req, res, next) => {
-  res.sendFile(__dirname + '/index.html');
+	res.sendFile(__dirname + '/index.html');
 });
 
 io.on('connection', (socket) => {

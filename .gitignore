@@ -1,3 +1,11 @@
 node_modules/
 *.swp
 *.swo
+
+# Ignore files related to python building
+__pycache__/
+
+# Unnecessary paths
+test/
+request_log/log*
+offloading_log/log*
