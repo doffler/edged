@@ -1,0 +1,34 @@
+{
+  "environment": {
+    "if-docker": "false",
+    "os": "ubuntu 16.04",
+    "gpu": "no"
+  },
+  "run_command": "python resnet_test.py --input_image ./burger.jpg --model_dir ./resnet50.h5",
+  "exec_file": {
+    "file_name": [
+      "model.py",
+      "utils.py",
+      "config.py",
+      "resnet_test.py"
+    ],
+    "index": [
+      "QmW9Hn113cDYeNtbFTbT9iYmXJSskGPgxWzGwESFdiPJPo",
+      "QmUVS5j85dX7vicn8hEXVeGqNb8ZGcmnDjKYASv7DGHyti",
+      "QmSPJVWW49PzKrf6NJDh8c5AfivbhDrUz7Dj4gESs9cW7m",
+      "QmYZebhY7BbyFQjZmDR6j3tCdQd2WBdjKdvQKcvhBpHpbm"
+    ]
+  },
+  "parameters": {
+    "file_name": [
+      "resnet50.h5"
+    ],
+    "index": [
+      "QmQb9avGNyahhXuNgjSRoX7vY7WUrBnj88CNiphKDKVJAQ"
+    ]
+  },
+  "input_data": {
+    "file_name": "burger.jpg",
+    "index": "QmTmvq2cJKLkyik1BZ8viFpc6DnvMJfvE3a9N9wLnzoDzf"
+  }
+}

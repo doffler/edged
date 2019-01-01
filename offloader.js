@@ -165,17 +165,14 @@ io.on('initIpfs', function (data) {
                   request({ url: paramUrl, timeout: 1000 }, function(error,response,body){
                     let paramContent = "";
                     if(error){
-                      let childPs = exec('ipfs cat ' + parameters[i], function(error,stdout,stderr){
+                      let childPs = exec('ipfs get --output ' + parameter_name[i]
+                            + ' ' + parameters[i], function(error,stdout,stderr){
                         if(error){
                           console.log('fail to read parameter data');
                         }
                         else{
-                          paramContent = stdout;
-                          let parameter_file = fs.createWriteStream(parameter_name[i]);
-                          parameter_file.write(paramContent);
                           paramFileReadDone = true;
                           console.log('parameter data successfully loaded');
-                          file_list.push(parameter_name[i])
                         }
                       });
                     }

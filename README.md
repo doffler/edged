@@ -152,11 +152,11 @@ To automate the process of generating the json file, we provide python script wh
 Following command will generate json file above.
 
 ```
-python src/upload_file.py --input_file ./examples/simple-mnist/data/test_demo/3.jpg \
-              --exec_file ./examples/simple-mnist/mnist_cnn_test.py ./examples/simple-mnist/cnn_model.py \
-              --parameter_file ./examples/simple-mnist/model \
-              --output ./examples/simple-mnist/request.json \
-              --base_json ./examples/simple-mnist/sample.json
+python src/upload_file.py --input_file ./examples/2_simple-mnist/data/test_demo/3.jpg \
+              --exec_file ./examples/2_simple-mnist/mnist_cnn_test.py ./examples/2_simple-mnist/cnn_model.py \
+              --parameter_file ./examples/2_simple-mnist/model \
+              --output ./examples/2_simple-mnist/request.json \
+              --base_json ./examples/2_simple-mnist/sample.json
 ```
 
 After that you will find corresponding json file in `./examples/simple-mnist/request.json` and you have to add this file before sending request to offloaders.
@@ -165,7 +165,7 @@ After that you will find corresponding json file in `./examples/simple-mnist/req
 ipfs add ./examples/simple-mnist/request.json
 ```
 
-Above command will add json file to IPFS system and you will get a index(address) for the json file. If such address is QmQ6o2WZ2YRmkAmSa8khuSPkpiSV25zGDB1MVxu7r8Nda2, you can broadcast offloading request with below command.
+Above command will add json file to IPFS system and you will get a index(address) for the json file. If such address is `QmQ6o2WZ2YRmkAmSa8khuSPkpiSV25zGDB1MVxu7r8Nda2`, you can broadcast offloading request with below command.
 
 ```
 node ./requester.js QmQ6o2WZ2YRmkAmSa8khuSPkpiSV25zGDB1MVxu7r8Nda2
