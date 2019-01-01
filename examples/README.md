@@ -16,4 +16,5 @@ In this directory, you might find various applications of EdgeD offloader platfo
 ## Example Cases
 #### Simple input data processing
 
-#### MNIST offloading 
+
+#### MNIST offloading

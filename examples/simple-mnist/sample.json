@@ -1,8 +1,0 @@
-{
-  "environment": {
-    "if-docker" : "false",
-        "os" : "ubuntu 16.04",
-        "gpu" : "no"
-  },
-  "run_command" : "python mnist_cnn_test.py --model-dir ./model --input_image ./3.jpg"
-}

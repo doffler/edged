@@ -105,8 +105,77 @@ node index.js
 
 ## Usage
 ### Requester Side
+Requester are obliged to construct json file in an appropriate form to request offloading.
+
+Json Files should be in following form.
+```
+{
+  "environment": {
+    "if-docker": "false",
+    "os": "ubuntu 16.04",
+    "gpu": "no"
+  },
+  "run_command": "python mnist_cnn_test.py --model-dir ./model --input_image ./3.jpg",
+  "exec_file": {
+    "file_name": [
+      "mnist_cnn_test.py",
+      "cnn_model.py"
+    ],
+    "index": [
+      "QmTZSFiSqR9YMhSryy7ug51ciqdYm8BD1m77qnZ4GvWvv4",
+      "QmYbFFLAVZUyV4D7q1dgwzUR43SSgWqFDccGgk6LCetUwH"
+    ]
+  },
+  "parameters": {
+    "file_name": [
+      "model"
+    ],
+    "index": [
+      "Qmey4cdfuwVe7PAZixewVf8Zsu9VUzgAWddUKKKKor4nHX"
+    ],
+    "isdir": true
+  },
+  "input_data": {
+    "file_name": "3.jpg",
+    "index": "QmZzn9BvHuF8Kr3iCEg8A823zLqCCRGPrmnYHR8M8zGBgb"
+  }
+}
+```
+
+* `exec_file` contains a necessary code files to run the offloading computation
+* `parameters` are optional field which contains model parameters and model metadata for the network
+* `input_data` contains input file(image, sound recordings) to test
+
+We find that it is bordersome for user to configure such json file every time.
+To automate the process of generating the json file, we provide python script which generates json file.
+
+Following command will generate json file above.
+
+```
+python src/upload_file.py --input_file ./examples/simple-mnist/data/test_demo/3.jpg \
+              --exec_file ./examples/simple-mnist/mnist_cnn_test.py ./examples/simple-mnist/cnn_model.py \
+              --parameter_file ./examples/simple-mnist/model \
+              --output ./examples/simple-mnist/request.json \
+              --base_json ./examples/simple-mnist/sample.json
+```
+
+After that you will find corresponding json file in `./examples/simple-mnist/request.json` and you have to add this file before sending request to offloaders.
+
+```
+ipfs add ./examples/simple-mnist/request.json
+```
+
+Above command will add json file to IPFS system and you will get a index(address) for the json file. If such address is QmQ6o2WZ2YRmkAmSa8khuSPkpiSV25zGDB1MVxu7r8Nda2, you can broadcast offloading request with below command.
+
+```
+node ./requester.js QmQ6o2WZ2YRmkAmSa8khuSPkpiSV25zGDB1MVxu7r8Nda2
+```
 
 ### Offloader Side
+Just turning on offloading daemon will suffice.
+```
+node ./offloader.js
+```
 
 ## Links
 * [IPFS](https://ipfs.io/)
