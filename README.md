@@ -1,7 +1,20 @@
 Edged : Edge Computing Offloading Platform
 ==========================================
 
-As a project for doffler, Decentralized Offloading Platform, EdgeD represents a module for constructing offloading system for edge devices. Unlike, doffler main system, communications EdgeD is based on socket.io channel. Implementations given in EdgeD will be advanced further by introducing blockchain system to verify and record every offloading requests.
+As a project for Doffler, Decentralized Offloading Platform, EdgeD represents a module for constructing offloading system for edge devices. Unlike, Doffler main system, communications EdgeD is based on socket.io channel. Implementations given in EdgeD will be advanced further by introducing blockchain system to verify and record every offloading requests.
+
+## Description
+EdgeD contains a code for processing computation offload requests and sending offload requests. EdgeD utilizes IPFS data system, a peer-to-peer based distributed file system, as a main channel for data transmission. In IPFS file systems, node requests desired file by a index, a hash value of a file, from neighbor nodes. The main advantage of EdgeD over other edge computing solutions is that it enables the edge devices to get relevant data directly from nearby devices. From this, edges devices and requesters can save up transmission time required to download and upload files with each other. Also another benefit of using p2p system is that offloading requester can get the desired result from fastest available edge devices, whereas in other systems, the performance of the offloading request is strictly effected by the status of the network and offloading center. This feature can be related to availability issue of the offloader.
+
+#### Workflow
+Workflow of the EdgeD offloading system works as follows.
+
+1. Requester constructs json file which contains necessary information for offloader to execute offloading.
+2. Requester submits a json file to socket io server to ask for offloading computation.
+3. Socket IO server broadcasts offloading request to connected offloaders, a edge devices.
+4. Offloader constructs execution environment for the offloading request and execute computation.
+5. Offloader returns offloading result back to the requester.
+
 
 ## Installation
 Installation setting given here is configured for Ubuntu 16.04 setting.
@@ -152,11 +165,11 @@ To automate the process of generating the json file, we provide python script wh
 Following command will generate json file above.
 
 ```
-python src/upload_file.py --input_file ./examples/simple-mnist/data/test_demo/3.jpg \
-              --exec_file ./examples/simple-mnist/mnist_cnn_test.py ./examples/simple-mnist/cnn_model.py \
-              --parameter_file ./examples/simple-mnist/model \
-              --output ./examples/simple-mnist/request.json \
-              --base_json ./examples/simple-mnist/sample.json
+python src/upload_file.py --input_file ./examples/2_simple-mnist/data/test_demo/3.jpg \
+              --exec_file ./examples/2_simple-mnist/mnist_cnn_test.py ./examples/2_simple-mnist/cnn_model.py \
+              --parameter_file ./examples/2_simple-mnist/model \
+              --output ./examples/2_simple-mnist/request.json \
+              --base_json ./examples/2_simple-mnist/sample.json
 ```
 
 After that you will find corresponding json file in `./examples/simple-mnist/request.json` and you have to add this file before sending request to offloaders.
@@ -165,7 +178,7 @@ After that you will find corresponding json file in `./examples/simple-mnist/req
 ipfs add ./examples/simple-mnist/request.json
 ```
 
-Above command will add json file to IPFS system and you will get a index(address) for the json file. If such address is QmQ6o2WZ2YRmkAmSa8khuSPkpiSV25zGDB1MVxu7r8Nda2, you can broadcast offloading request with below command.
+Above command will add json file to IPFS system and you will get a index(address) for the json file. If such address is `QmQ6o2WZ2YRmkAmSa8khuSPkpiSV25zGDB1MVxu7r8Nda2`, you can broadcast offloading request with below command.
 
 ```
 node ./requester.js QmQ6o2WZ2YRmkAmSa8khuSPkpiSV25zGDB1MVxu7r8Nda2

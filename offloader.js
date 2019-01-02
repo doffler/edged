@@ -1,15 +1,27 @@
-// Socke IO server to transfer offloading requests and results
-// Default Setting : 3.17.150.19:3000
-var io = require('socket.io-client')('http://3.17.150.19:3000');
+/**
+ * File Name : requester.js
+ * Executing : node requester.js <index_file>
+ */
+
+// NodeJS script code for the offloader side.
+//   In this code, offloader is waiting for incoming offloading requests
+// broadcasted from socket io server.
+//   Upon receiving offloading requests, offloader will download necessary
+// files depicted in json file submitted by requester. After constructing
+// environment for executing offloading calculation, offloader will run the
+// computation and give a result back to requester.
+var io = require('socket.io-client')('http://lynx.snu.ac.kr:8000');
 var request = require('request');
 var exec = require('child_process').exec;
 var fs = require('fs');
 var os = require('os');
 
-// default json file to get request information
+// default json file to store request information
 var requestJson = "example.json";
 var file_list = [];
+var wait_time = 1;
 
+// flags for tracking whether device is ready to execute the command
 var jsonFileReadDone = false;
 var execFileReadDone = false;
 var inputFileReadDone = false;
@@ -17,11 +29,15 @@ var paramFileReadDone = false;
 var json_hash = "";
 var resultData = "";
 
+//   function executes the offloading computation and return a result back to
+// the socket io server to get back to the requester.
 function execLogic() {
   if(jsonFileReadDone && execFileReadDone
       && inputFileReadDone && paramFileReadDone){
     console.log("file loading done");
+    console.timeEnd('downloading');
 
+    console.time('offloading');
     if(resultData.run_command){
       var childPs = exec(resultData.run_command, function(error,stdout,stderr) {
         if(error){
@@ -32,7 +48,7 @@ function execLogic() {
           console.log("exec success : " + stdout);
           io.emit('result', { userId: os.hostname(), index: json_hash,
               output: stdout });
-
+      console.timeEnd('offloading');
           // reset flags to get new offloading request
           jsonFileReadDone = false;
           execFileReadDone = false;
@@ -47,15 +63,22 @@ function execLogic() {
   }
 }
 
+// Logic to process incoming offloading request
+//   1. store offloading request information into json file
+//   2. downloading required data files, code files from ipfs server
+//   3. construct execution environment for the offloading calculation
 io.on('initIpfs', function (data) {
   console.log('Get Request');
+  console.time('downloading');
   json_hash = data;
   var baseUrl = 'https://gateway.ipfs.io/ipfs/';
 
   var url = baseUrl;
   url = baseUrl + json_hash;
 
-  request({ url: url, timeout: 1000 }, function (error, response, body) {
+  //   request json file from gateway server provided by ipfs, if gateway server
+  // does not respond, request file directly from ipfs
+  request({ url: url, timeout: wait_time }, function (error, response, body) {
     resultData = "";
     if(error){
       var childPs = exec('ipfs cat ' + data, function (error, stdout, stderr) {
@@ -96,7 +119,7 @@ io.on('initIpfs', function (data) {
                 let execUrl = baseUrl + exec_index[idx];
                 let ex_index = exec_index[idx];
                 let ex_name = exec_name[idx];
-                request({ url: execUrl, timeout: 1000 }, function(error,response,body){
+                request({ url: execUrl, timeout: wait_time }, function(error,response,body){
                   let execContent = "";
                   if(error){
                     let childPs = exec('ipfs cat ' + ex_index, function (error, stdout, stderr) {
@@ -162,20 +185,17 @@ io.on('initIpfs', function (data) {
                 for(let i=0;i<parameters.length;i++){
                   paramFileReadDone = false;
                   let paramUrl = baseUrl + parameters[i];
-                  request({ url: paramUrl, timeout: 1000 }, function(error,response,body){
+                  request({ url: paramUrl, timeout: wait_time }, function(error,response,body){
                     let paramContent = "";
                     if(error){
-                      let childPs = exec('ipfs cat ' + parameters[i], function(error,stdout,stderr){
+                      let childPs = exec('ipfs get --output ' + parameter_name[i]
+                            + ' ' + parameters[i], function(error,stdout,stderr){
                         if(error){
                           console.log('fail to read parameter data');
                         }
                         else{
-                          paramContent = stdout;
-                          let parameter_file = fs.createWriteStream(parameter_name[i]);
-                          parameter_file.write(paramContent);
                           paramFileReadDone = true;
                           console.log('parameter data successfully loaded');
-                          file_list.push(parameter_name[i])
                         }
                       });
                     }
@@ -191,7 +211,7 @@ io.on('initIpfs', function (data) {
               }
               else{
                 var paramUrl = baseUrl + parameters;
-                request({ url: paramUrl, timeout: 1000 }, function(error,response,body){
+                request({ url: paramUrl, timeout: wait_time }, function(error,response,body){
                   var paramContent = "";
                   if(error){
                     var childPs = exec('ipfs cat ' + parameters, function(error,stdout,stderr){
@@ -229,7 +249,7 @@ io.on('initIpfs', function (data) {
 
             // get exec file
             var inputUrl = baseUrl + input_index;
-            request({ url: inputUrl, timeout: 1000 }, function(error,response,body){
+            request({ url: inputUrl, timeout: wait_time }, function(error,response,body){
               var inputContent = "";
               if(error){
                 var childPs = exec('ipfs get --output ' + input_name + ' '
@@ -272,7 +292,7 @@ io.on('initIpfs', function (data) {
 
         // get exec file
         var execUrl = baseUrl + index;
-        request({ url: execUrl, timeout: 1000 }, function(error,response,body){
+        request({ url: execUrl, timeout: wait_time }, function(error,response,body){
           var execContent = "";
           if(error){
             var childPs = exec('ipfs cat ' + index, function(error,stdout,stderr){
@@ -303,7 +323,7 @@ io.on('initIpfs', function (data) {
 
         // get parameters file
         var paramUrl = baseUrl + parameters;
-        request({ url: paramUrl, timeout: 1000 }, function(error,response,body){
+        request({ url: paramUrl, timeout: wait_time }, function(error,response,body){
           var paramContent = "";
           if(error){
             var childPs = exec('ipfs cat ' + parameters, function(error,stdout,stderr){
@@ -338,7 +358,7 @@ io.on('initIpfs', function (data) {
 
       // get exec file
       var inputUrl = baseUrl + index;
-      request({ url: inputUrl, timeout: 1000 }, function(error,response,body){
+      request({ url: inputUrl, timeout: wait_time }, function(error,response,body){
         var inputContent = "";
         if(error){
           var childPs = exec('ipfs cat ' + index, function(error,stdout,stderr){
