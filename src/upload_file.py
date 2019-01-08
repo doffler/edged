@@ -26,7 +26,7 @@ def main():
       base_json['parameters']['isdir'] = True
 
   if FLAGS.input_file :
-    input_hash, index_name, input_dir = upload(FLAGS.input_file)
+    input_hash, index_name, input_dir = upload(FLAGS.input_file, is_input=True)
     base_json['input_data'] = dict()
     base_json['input_data']['file_name'] = index_name
     base_json['input_data']['index'] = input_hash
@@ -40,6 +40,7 @@ def argparser():
   parser.add_argument(
     '--input_file',
     type=str,
+    narg='+',
     help='Input file for offloading computation'
   )
   parser.add_argument(
@@ -65,7 +66,7 @@ def argparser():
     help='Output name for config json file'
   )
 
-  FLAGS, unparsed = parser.parse_known_args()  
+  FLAGS, unparsed = parser.parse_known_args()
   if FLAGS.input_file :
     assert os.path.exists(FLAGS.input_file)
   if FLAGS.exec_file :
@@ -74,30 +75,30 @@ def argparser():
   if FLAGS.parameter_file :
     for path in FLAGS.parameter_file :
       assert os.path.exists(path)
-  if FLAGS.base_json : 
+  if FLAGS.base_json :
     assert os.path.exists(FLAGS.base_json)
-  
+
   return FLAGS
 
-def upload(path_name):
+def upload(path_name, is_input=False):
   dir_flag = False
   def upload_file(file_name):
     f_hash = subprocess.check_output(['ipfs', 'add', '{}'
           .format(file_name)]).decode('UTF-8')
     exec_hash = f_hash.split()[1]
     return exec_hash
-  
+
   def upload_dir(dir_name):
     d_hash = subprocess.check_output(['ipfs', 'add', '-r', '{}'
            .format(dir_name)]).decode('UTF-8')
-    dir_hash = d_hash.split('\n')    
+    dir_hash = d_hash.split('\n')
     dir_hash = [line for line in dir_hash if 'added' in line]
     exec_hash = dir_hash[-1].split()[1]
     return exec_hash
-  
-  if isinstance(path_name, list) :
-    upload_hash = []
-    upload_name = []
+
+  upload_hash = []
+  upload_name = []
+  if not is_input:
     for path in path_name:
       isdir = os.path.isdir(path)
       if isdir :
@@ -106,16 +107,10 @@ def upload(path_name):
         current_hash = upload_file(path)
       upload_hash.append(current_hash)
       upload_name.append(os.path.basename(path))
-    if len(path_name) == 1 and os.path.isdir(path_name[0]):
-      dir_flag = True
-  else :
-    isdir = os.path.isdir(path_name)
-    if isdir :
-      upload_hash = upload_dir(path_name)
-      dir_flag = True
-    else :
-      upload_hash = upload_file(path_name)
+  else:
+    upload_hash = upload_file(path_name)
     upload_name = os.path.basename(path_name)
+
   return upload_hash, upload_name, dir_flag
 
 
