@@ -96,8 +96,11 @@ function loadFiles(index_list, name_list, key_name) {
 io.on('initIpfs', function (data) {
   console.log('Get Request');
   console.time('downloading');
+<<<<<<< HEAD
   json_hash = data;
 
+=======
+>>>>>>> f55fdf61f5a65a2e7373198ff4c59168174555c3
   //   request json file from gateway server provided by ipfs, if gateway server
   // does not respond, request file directly from ipfs
   var childPs = exec('ipfs cat ' + data, function (error, stdout, stderr) {
