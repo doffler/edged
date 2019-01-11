@@ -109,7 +109,7 @@ ipfs daemon &
 ```
 
 ### Socket IO
-Our protocol uses socket.io as a main communication channel between offloaders and requesters. We set default socket io server with a machine located at 'http://3.17.150.19:3000'. If you want to construct your own offloading channel, change this address on the first line of index.js file.
+Our protocol uses socket.io as a main communication channel between offloaders and requesters. We set default socket io server with a machine located at 'http://lynx.snu.ac.kr:8000'. If you want to construct your own offloading channel, change this address on the first line of index.js file.
 
 Following command will allow you to run your own socket io server.
 ```

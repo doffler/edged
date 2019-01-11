@@ -78,6 +78,7 @@ Simple mnist model running through edge devices. Users send mnist digit data and
 ```
 
 #### ResNet object recognition offloading
+Resnet Model brought https://github.com/IBM/MAX-ResNet-50. Model has been modified to fit into our offloading platform. This model returns five most probable labels for given input image file.
 ```
 {
   "environment": {
